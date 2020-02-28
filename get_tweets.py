@@ -2,10 +2,10 @@ import tweepy
 import sys
 
 def access_Twitter(handle):
-	consumer_key="iD1MxOsmkhm3auyyA8KOKeNiF"
-	consumer_secret="rc7vmkFI7TEb0Jtd5deWOgwhSHOOvlPYw1CbPMhH4GLlQjQrzV"
-	access_key="1009583856-D5nYFeOMC9mgA8yCqYdDdx0OzC3n80FhH8DmBDy"
-	access_secret="pKzYDRPOLrufQZujbL4ckpFtD63oPi0pzpDS1jsd3lavK"
+	consumer_key=""
+	consumer_secret=""
+	access_key=""
+	access_secret=""
 
 	api=tweepy.OAuthHandler(consumer_key, consumer_secret)
 	api.set_access_token(access_key, access_secret)
