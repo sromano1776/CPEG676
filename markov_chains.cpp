@@ -7,79 +7,104 @@
 #include <unistd.h>
 using namespace std;
 
+class Pair{
+	public:
+		string prefix;
+		vector<string> suffix;
+		
+		Pair(string pre, string suff){
+			prefix=pre;
+			suffix.push_back(suff);
+		}
+};
+
+vector<Pair> markov_chain;
+
+int find_word_in_chain(string word){
+	for (int i=0; i<markov_chain.size(); i++){
+		if (markov_chain.at(i).prefix.compare(word)==0){
+			return i;
+		}
+	}
+	return -1;
+}
+
+void add_markov_link(string prefix, string suffix){
+	int link_index=find_word_in_chain(prefix);
+	
+	if(link_index==-1){
+		markov_chain.push_back(Pair(prefix, suffix));
+	}
+	else{
+		markov_chain.at(link_index).suffix.push_back(suffix);
+	}
+}
+
 void parse_line(string line){
-    cout<<"Got to parse_line"<<endl;
-    long word_start_index = 0;
-    long word_end_index;
+    long prefix_starting_index = 0;
+    long prefix_ending_index;
     
-    long follower_start_index;
-    long follower_end_index;
+    long suffix_starting_index;
+    long suffix_ending_index;
     
-    long word_len;
-    long follower_len;
+    long prefix_len;
+    long sufix_len;
     
-    string word = "";
-    string follower = "";
+    string prefix = "";
+    string suffix = "";
     
-    // Goes through all the words in the tweet
-    while(word_start_index != string::npos){
-        word_end_index = line.find(" ", word_start_index);
-        word_len = word_end_index - word_start_index;
+    while(prefix_starting_index != string::npos){
+        prefix_ending_index = line.find(" ", prefix_starting_index);
+        prefix_len = prefix_ending_index - prefix_starting_index;
         
-        // Find the next base word
-        while(word_len == 0){
-            word_start_index++;
-            word_end_index = line.find(" ", word_start_index);
-            word_len = word_end_index - word_start_index;
+        while(prefix_len == 0){
+            prefix_starting_index++;
+            prefix_ending_index = line.find(" ", prefix_starting_index);
+            prefix_len = prefix_ending_index - prefix_starting_index;
             
-            // Case where the last word in the tweet has been reached
-            if(word_start_index >= line.length()){
-                word_start_index = line.length(); // Should always be the length anyway due to logic of the find function, but set in case of boundary conditions 
+            if(prefix_starting_index >= line.length()){
+                prefix_starting_index = line.length(); 
                 break;
             }
         }
         
-        word = line.substr(word_start_index, word_len); // Now holds a single word from the tweet.
+        prefix = line.substr(prefix_starting_index, prefix_len); 
         
-        // Now find the following word (if there is one)
-        if(word_end_index != string::npos){
-            follower_start_index = word_end_index + 1;
-            follower_end_index = line.find(" ", follower_start_index);
-            follower_len = follower_end_index - follower_start_index;
+        if(prefix_ending_index != string::npos){
+            suffix_starting_index = prefix_ending_index + 1;
+            suffix_ending_index = line.find(" ", suffix_starting_index);
+            sufix_len = suffix_ending_index - suffix_starting_index;
             
-            while(follower_len == 0){
-                follower_start_index++;
-                follower_end_index = line.find(" ", follower_start_index);
-                follower_len = follower_end_index - follower_start_index;
-                if(follower_start_index >= line.length()){
-                    follower_start_index = line.length(); // should always be the length anyway due to logic of the find function, but set in case of boundary conditions 
+            while(sufix_len == 0){
+                suffix_starting_index++;
+                suffix_ending_index = line.find(" ", suffix_starting_index);
+                sufix_len = suffix_ending_index - suffix_starting_index;
+                if(suffix_starting_index >= line.length()){
+                    suffix_starting_index = line.length(); 
                     break;
                 }
             }
             
-            word = line.substr(word_start_index, word_len);
-            follower = line.substr(follower_start_index, follower_len); // Now contains the word right after the base word
+            prefix = line.substr(prefix_starting_index, prefix_len);
+            suffix = line.substr(suffix_starting_index, sufix_len); 
             
-            word_start_index = follower_start_index;    // The next base word will be the current base word's follower
+            prefix_starting_index = suffix_starting_index;    
         }
         else{
-            follower = "";  // If the base word is that last word in the tweet, then it does not have a following word
-            word_start_index = string::npos;
+            suffix = "";  
+            prefix_starting_index = string::npos;
         }
         
-        //add_pair(word, follower);   // Add the base word and its follower to the vector of Markov links
-	cout<<word<<" "<<follower<<endl;
-	                                    // or update the base word's vector of followers if there is already a record
+        add_markov_link(prefix, suffix);                                      
     }
-    cout<<"End of tweet"<<endl;
 }
 
 
 int parse_text_file(string filename){
-    string line;
+    string tweet;
     ifstream myfile((filename+".txt").c_str());
-    while(getline (myfile,line)){
-        parse_line(line);
+    while(getline (myfile,tweet)){
+        parse_line(tweet);
     }
     myfile.close();
 }
@@ -87,7 +112,7 @@ int parse_text_file(string filename){
 int main(int argc, char* argv[]){
 	if(argc <= 1)
 	{
-        	cout << "Please provide path/to/file.txt or @Twitter_Username" << endl;
+        	cout << "Please provide a path to a text file containing tweets!" << endl;
         	return 0;
 	}
 	string user=argv[1];
