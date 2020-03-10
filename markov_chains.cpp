@@ -1,9 +1,10 @@
-class Pair{
+class Pair{ //defines a class of a "Pair" of words being the first word and whatever word follows it
     public:
         string word;
         vector<string> followers;
 
-        Pair(string wrd, string suffix){
+        Pair(string wrd, string suffix){//constructor for the Pair of words. Takes the word, 
+										//and adds the follower onto an array
             word = wrd;
             followers.push_back(suffix);
         }
@@ -14,7 +15,8 @@ vector<Pair> markov_chain;
 string tweet = "";
 
 
-int find_markov_link_index(string word){
+int find_markov_link_index(string word){//finds the index of the markov link if it exists already
+										//if not it returns -1 and the markov link is added
     for(int i = 0; i < markov_chain.size(); i++){
         if(markov_chain.at(i).word.compare(word) == 0){
             return i;
@@ -24,7 +26,7 @@ int find_markov_link_index(string word){
 }
 
 
-void add_pair(string word, string suffix){
+void add_pair(string word, string suffix){//physically adds the markov link into the chain
     int index = find_markov_link_index(word);
 
     if(index == -1){
@@ -36,7 +38,7 @@ void add_pair(string word, string suffix){
 }
 
 
-void parse_line(string line){
+void parse_line(string line){//breaks the current tweet being fed in into a word and whatever word follows it
     long prefix_start_index = 0;
     long prefix_end_index;
 
@@ -88,13 +90,12 @@ void parse_line(string line){
             suffix = "";
             prefix_start_index = string::npos;
         }
-        add_pair(word, suffix);
+        add_pair(word, suffix); // adds the pair of words into the markov chain
     }
 }
 
-int parse_text_file(string filename){
+int parse_text_file(string filename){//reads in the text file with given tweets line by line to add them to the markov chain
     string line;
-
     ifstream myfile(filename.c_str());
     if (myfile.is_open()){
         while(getline (myfile,line)){
@@ -108,11 +109,11 @@ int parse_text_file(string filename){
     }
 }
 
-int get_rand_index(int choices){
+int get_rand_index(int choices){//randomly chooses starting word for generated tweet
     return rand() % choices;
 }
 
-void generate_tweet(){
+void generate_tweet(){//function to generate the tweet
     int prefix_index = get_rand_index(markov_chain.size());
     int suffix_index = 0;
     int suffix_number = 0;
@@ -120,7 +121,7 @@ void generate_tweet(){
     string last_word = "";
     tweet = "";
     tweet = markov_chain.at(prefix_index).word;
-    last_word = tweet;
+    last_word = tweet; //the tweet now contains a singe word
     while(!tweet_done){
         prefix_index = find_markov_link_index(last_word);
         Pair dummy = markov_chain.at(prefix_index);
