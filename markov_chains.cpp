@@ -1,121 +1,181 @@
-#include <iostream>
-#include <string>
-#include <fstream>
-#include <vector>
-#include <cstdlib>
-#include <time.h>
-#include <unistd.h>
-using namespace std;
-
 class Pair{
-	public:
-		string prefix;
-		vector<string> suffix;
-		
-		Pair(string pre, string suff){
-			prefix=pre;
-			suffix.push_back(suff);
-		}
+    public:
+        string word;
+        vector<string> followers;
+
+        Pair(string wrd, string suffix){
+            word = wrd;
+            followers.push_back(suffix);
+        }
 };
 
+
 vector<Pair> markov_chain;
+string tweet = "";
 
-int find_word_in_chain(string word){
-	for (int i=0; i<markov_chain.size(); i++){
-		if (markov_chain.at(i).prefix.compare(word)==0){
-			return i;
-		}
-	}
-	return -1;
+
+int find_markov_link_index(string word){
+    for(int i = 0; i < markov_chain.size(); i++){
+        if(markov_chain.at(i).word.compare(word) == 0){
+            return i;
+        }
+    }
+    return -1;
 }
 
-void add_markov_link(string prefix, string suffix){
-	int link_index=find_word_in_chain(prefix);
-	
-	if(link_index==-1){
-		markov_chain.push_back(Pair(prefix, suffix));
-	}
-	else{
-		markov_chain.at(link_index).suffix.push_back(suffix);
-	}
+
+void add_pair(string word, string suffix){
+    int index = find_markov_link_index(word);
+
+    if(index == -1){
+        markov_chain.push_back(Pair(word, suffix));
+    }
+    else{
+        markov_chain.at(index).followers.push_back(suffix);
+    }
 }
+
 
 void parse_line(string line){
-    long prefix_starting_index = 0;
-    long prefix_ending_index;
-    
-    long suffix_starting_index;
-    long suffix_ending_index;
-    
-    long prefix_len;
-    long sufix_len;
-    
-    string prefix = "";
+    long prefix_start_index = 0;
+    long prefix_end_index;
+
+    long suffix_start_index;
+    long suffix_end_index;
+
+    long prefix_length;
+    long follower_length;
+
+    string word = "";
     string suffix = "";
-    
-    while(prefix_starting_index != string::npos){
-        prefix_ending_index = line.find(" ", prefix_starting_index);
-        prefix_len = prefix_ending_index - prefix_starting_index;
-        
-        while(prefix_len == 0){
-            prefix_starting_index++;
-            prefix_ending_index = line.find(" ", prefix_starting_index);
-            prefix_len = prefix_ending_index - prefix_starting_index;
-            
-            if(prefix_starting_index >= line.length()){
-                prefix_starting_index = line.length(); 
+
+
+    while(prefix_start_index != string::npos){
+        prefix_end_index = line.find(" ", prefix_start_index);
+        prefix_length = prefix_end_index - prefix_start_index;
+        while(prefix_length == 0){
+            prefix_start_index++;
+            prefix_end_index = line.find(" ", prefix_start_index);
+            prefix_length = prefix_end_index - prefix_start_index;
+
+
+            if(prefix_start_index >= line.length()){
+                prefix_start_index = line.length();
                 break;
             }
         }
-        
-        prefix = line.substr(prefix_starting_index, prefix_len); 
-        
-        if(prefix_ending_index != string::npos){
-            suffix_starting_index = prefix_ending_index + 1;
-            suffix_ending_index = line.find(" ", suffix_starting_index);
-            sufix_len = suffix_ending_index - suffix_starting_index;
-            
-            while(sufix_len == 0){
-                suffix_starting_index++;
-                suffix_ending_index = line.find(" ", suffix_starting_index);
-                sufix_len = suffix_ending_index - suffix_starting_index;
-                if(suffix_starting_index >= line.length()){
-                    suffix_starting_index = line.length(); 
+        word = line.substr(prefix_start_index, prefix_length);
+        if(prefix_end_index != string::npos){
+            suffix_start_index = prefix_end_index + 1;
+            suffix_end_index = line.find(" ", suffix_start_index);
+            follower_length = suffix_end_index - suffix_start_index;
+
+            while(follower_length == 0){
+                suffix_start_index++;
+                suffix_end_index = line.find(" ", suffix_start_index);
+                follower_length = suffix_end_index - suffix_start_index;
+                if(suffix_start_index >= line.length()){
+                    suffix_start_index = line.length();
                     break;
                 }
             }
-            
-            prefix = line.substr(prefix_starting_index, prefix_len);
-            suffix = line.substr(suffix_starting_index, sufix_len); 
-            
-            prefix_starting_index = suffix_starting_index;    
+            word = line.substr(prefix_start_index, prefix_length);
+            suffix = line.substr(suffix_start_index, follower_length);
+
+            prefix_start_index = suffix_start_index;
         }
         else{
-            suffix = "";  
-            prefix_starting_index = string::npos;
+            suffix = "";
+            prefix_start_index = string::npos;
         }
-        
-        add_markov_link(prefix, suffix);                                      
+        add_pair(word, suffix);
     }
 }
 
-
 int parse_text_file(string filename){
-    string tweet;
-    ifstream myfile((filename+".txt").c_str());
-    while(getline (myfile,tweet)){
-        parse_line(tweet);
+    string line;
+
+    ifstream myfile(filename.c_str());
+    if (myfile.is_open()){
+        while(getline (myfile,line)){
+            parse_line(line);
+        }
+        myfile.close();
+        return 1;
     }
-    myfile.close();
+    else{
+        return 0;
+    }
+}
+
+int get_rand_index(int choices){
+    return rand() % choices;
+}
+
+void generate_tweet(){
+    int prefix_index = get_rand_index(markov_chain.size());
+    int suffix_index = 0;
+    int suffix_number = 0;
+    bool tweet_done = false;
+    string last_word = "";
+    tweet = "";
+    tweet = markov_chain.at(prefix_index).word;
+    last_word = tweet;
+    while(!tweet_done){
+        prefix_index = find_markov_link_index(last_word);
+        Pair dummy = markov_chain.at(prefix_index);
+        suffix_number = dummy.followers.size();
+        suffix_index = get_rand_index(suffix_number);
+        last_word = dummy.followers.at(suffix_index);
+
+        if(last_word.length() == 0){
+            tweet_done = true;
+        }
+        else{
+            if(tweet.length() + last_word.length() > 279){
+                tweet_done = true;
+            }
+            else{
+                tweet = tweet + " " + last_word;
+            }
+        }
+    }
+    cout << tweet << endl;
 }
 
 int main(int argc, char* argv[]){
-	if(argc <= 1)
-	{
-        	cout << "Please provide a path to a text file containing tweets!" << endl;
-        	return 0;
-	}
-	string user=argv[1];
-	parse_text_file(user);
-	return 0;
+    if(argc <= 1){
+        cout << "Please provide a path to text file (/path/to/file) or @Twitter_Handle" << endl;
+        return 0;
+    }
+
+    string user_input(argv[1]);
+    srand(time(NULL));
+
+    if(user_input.at(0) == '@'){
+        cout << "Remain calm! Accessing Twitter now using handle"<< user_input<< endl;
+        string arg = "python get_tweets.py " + user_input;
+        cout<<arg<<endl;
+        int err = system(arg.c_str());
+
+        if(err == -1){
+            cout << "Could not run script to get tweets. Is python installed?" << endl;
+        }
+
+        user_input = user_input.substr(1, user_input.length()) + ".txt";
+    }
+
+    cout << "Reading text file " << user_input << "..." << endl;
+
+    if(parse_text_file(user_input)){
+
+        cout << "Parsing complete...."<<endl;
+        cout << "Generating a tweet using " <<user_input<<endl<< endl;
+        generate_tweet();
+    }
+    else{
+        cout << "File "<< user_input << " was not found" << endl;
+    }
+
+    return 0;
 }
