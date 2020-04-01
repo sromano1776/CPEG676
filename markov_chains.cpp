@@ -1,3 +1,12 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <vector>
+#include <cstdlib>
+#include <time.h>
+#include <unistd.h>
+using namespace std;
+
 class Pair{ //defines a class of a "Pair" of words being the first word and whatever word follows it
     public:
         string word;
