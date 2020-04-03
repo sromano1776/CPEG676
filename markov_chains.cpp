@@ -154,12 +154,17 @@ void generate_tweet(){//function to generate the tweet
 }
 
 int main(int argc, char* argv[]){
+    string user_input="";
     if(argc <= 1){
+        string input="";
         cout << "Please provide a path to text file (/path/to/file) or @Twitter_Handle" << endl;
-        return 0;
+        cin>>input;
+        user_input=input;
     }
-
-    string user_input(argv[1]);
+    else{
+        string user_input(argv[1]);
+    }
+	
     srand(time(NULL));
 
     if(user_input.at(0) == '@'){
